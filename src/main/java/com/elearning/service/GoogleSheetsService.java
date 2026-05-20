@@ -120,6 +120,11 @@ public class GoogleSheetsService {
      * Add enrollment to Google Sheet
      */
     public void addEnrollmentToSheet(Enrollment enrollment, String name, String email) {
+        System.out.println("=== METHOD addEnrollmentToSheet ENTERED ===");
+        System.out.println("Enrollment object: " + enrollment);
+        System.out.println("Name: " + name);
+        System.out.println("Email: " + email);
+        
         try {
             System.out.println("=== STARTING GOOGLE SHEETS APPEND ===");
             System.out.println("Spreadsheet ID: " + SPREADSHEET_ID);
@@ -129,9 +134,11 @@ public class GoogleSheetsService {
             System.out.println("Name: " + name);
             System.out.println("Email: " + email);
 
+            System.out.println("STEP 1: Getting Sheets service...");
             Sheets sheetsService = getSheetsService();
-            System.out.println("Sheets service initialized successfully");
+            System.out.println("STEP 1 COMPLETED: Sheets service initialized successfully");
 
+            System.out.println("STEP 2: Preparing data to be added...");
             // Prepare data to be added
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String enrollmentDate = enrollment.getEnrollmentDate().format(formatter);
@@ -149,24 +156,27 @@ public class GoogleSheetsService {
                 enrollmentDate
             );
 
-            System.out.println("Row data size: " + rowData.size());
+            System.out.println("STEP 2 COMPLETED: Row data size: " + rowData.size());
             System.out.println("Row data: " + rowData);
 
+            System.out.println("STEP 3: Creating value range...");
             // Create value range
             ValueRange body = new ValueRange()
                     .setValues(Collections.singletonList(rowData));
 
-            System.out.println("Value range created, appending to sheet...");
+            System.out.println("STEP 3 COMPLETED: Value range created");
+            System.out.println("Appending to sheet...");
             System.out.println("API call: spreadsheets().values().append(" + SPREADSHEET_ID + ", " + SHEET_NAME + ", body)");
             System.out.println("Value input option: RAW");
 
+            System.out.println("STEP 4: Executing Google Sheets API append request...");
             // Append to sheet
-            System.out.println("Executing Google Sheets API append request...");
             var response = sheetsService.spreadsheets().values()
                     .append(SPREADSHEET_ID, SHEET_NAME, body)
                     .setValueInputOption("RAW")
                     .execute();
             
+            System.out.println("STEP 4 COMPLETED: API execute() returned");
             System.out.println("=== GOOGLE SHEETS API RESPONSE ===");
             System.out.println("Response object: " + response);
             System.out.println("Response class: " + response.getClass().getName());
@@ -202,6 +212,8 @@ public class GoogleSheetsService {
             
             throw new RuntimeException("Failed to add enrollment to Google Sheet", e);
         }
+        
+        System.out.println("=== METHOD addEnrollmentToSheet EXITING ===");
     }
 
     /**

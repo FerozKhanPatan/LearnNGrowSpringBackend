@@ -188,14 +188,31 @@ public class EnrollmentController {
 
             // Submit to Google Sheets (non-blocking)
             try {
+                logger.info("=== ENTERED GOOGLE SHEETS SUBMISSION ===");
+                System.out.println("=== ENTERED GOOGLE SHEETS SUBMISSION ===");
                 logger.info("Submitting enrollment to Google Sheets...");
                 System.out.println("Submitting enrollment to Google Sheets...");
+                logger.info("Enrollment ID: {}", savedEnrollment.getId());
+                System.out.println("Enrollment ID: " + savedEnrollment.getId());
+                logger.info("Name: {}", request.getName());
+                System.out.println("Name: " + request.getName());
+                logger.info("Email: {}", request.getEmail());
+                System.out.println("Email: " + request.getEmail());
+                
                 googleSheetsService.addEnrollmentToSheet(savedEnrollment, request.getName(), request.getEmail());
+                
+                logger.info("=== GOOGLE SHEETS SUBMISSION COMPLETED ===");
+                System.out.println("=== GOOGLE SHEETS SUBMISSION COMPLETED ===");
                 logger.info("Google Sheets submission successful");
                 System.out.println("Google Sheets submission successful");
             } catch (Exception e) {
+                logger.error("=== GOOGLE SHEETS SUBMISSION FAILED ===");
                 logger.error("Failed to add to Google Sheets: {}", e.getMessage(), e);
+                System.err.println("=== GOOGLE SHEETS SUBMISSION FAILED ===");
                 System.err.println("Failed to add to Google Sheets: " + e.getMessage());
+                System.err.println("Exception type: " + e.getClass().getName());
+                System.err.println("Exception message: " + e.getMessage());
+                System.err.println("Cause: " + (e.getCause() != null ? e.getCause().getMessage() : "N/A"));
                 e.printStackTrace();
                 // Don't fail the enrollment if Google Sheets fails
             }
