@@ -186,14 +186,12 @@ public class EnrollmentController {
             logger.info("Enrollment saved successfully with ID: {}", savedEnrollment.getId());
             System.out.println("Enrollment saved successfully with ID: " + savedEnrollment.getId());
 
-            // Submit to Google Sheets (non-blocking) - TEMPORARILY DISABLED FOR DEBUGGING
-            // TODO: Re-enable after confirming API returns 200
-            /*
+            // Submit to Google Sheets (non-blocking) - STAGE 1: Only method call with logging
             try {
-                logger.info("=== ENTERED GOOGLE SHEETS SUBMISSION ===");
-                System.out.println("=== ENTERED GOOGLE SHEETS SUBMISSION ===");
-                logger.info("Submitting enrollment to Google Sheets...");
-                System.out.println("Submitting enrollment to Google Sheets...");
+                logger.info("=== STAGE 1: GOOGLE SHEETS SUBMISSION START ===");
+                System.out.println("=== STAGE 1: GOOGLE SHEETS SUBMISSION START ===");
+                logger.info("Submitting enrollment to Google Sheets (STAGE 1 - logging only)...");
+                System.out.println("Submitting enrollment to Google Sheets (STAGE 1 - logging only)...");
                 logger.info("Enrollment ID: {}", savedEnrollment.getId());
                 System.out.println("Enrollment ID: " + savedEnrollment.getId());
                 logger.info("Name: {}", request.getName());
@@ -203,15 +201,15 @@ public class EnrollmentController {
                 
                 googleSheetsService.addEnrollmentToSheet(savedEnrollment, request.getName(), request.getEmail());
                 
-                logger.info("=== GOOGLE SHEETS SUBMISSION COMPLETED ===");
-                System.out.println("=== GOOGLE SHEETS SUBMISSION COMPLETED ===");
-                logger.info("Google Sheets submission successful");
-                System.out.println("Google Sheets submission successful");
+                logger.info("=== STAGE 1: GOOGLE SHEETS SUBMISSION COMPLETED ===");
+                System.out.println("=== STAGE 1: GOOGLE SHEETS SUBMISSION COMPLETED ===");
+                logger.info("Google Sheets submission successful (STAGE 1)");
+                System.out.println("Google Sheets submission successful (STAGE 1)");
             } catch (Exception e) {
                 // Google Sheets failure MUST NOT fail the entire enrollment
-                logger.error("=== GOOGLE SHEETS SUBMISSION FAILED (ENROLLMENT STILL SUCCESSFUL) ===");
+                logger.error("=== STAGE 1: GOOGLE SHEETS SUBMISSION FAILED (ENROLLMENT STILL SUCCESSFUL) ===");
                 logger.error("Failed to add to Google Sheets: {}", e.getMessage(), e);
-                System.err.println("=== GOOGLE SHEETS SUBMISSION FAILED (ENROLLMENT STILL SUCCESSFUL) ===");
+                System.err.println("=== STAGE 1: GOOGLE SHEETS SUBMISSION FAILED (ENROLLMENT STILL SUCCESSFUL) ===");
                 System.err.println("Failed to add to Google Sheets: " + e.getMessage());
                 System.err.println("Exception type: " + e.getClass().getName());
                 System.err.println("Exception message: " + e.getMessage());
@@ -221,10 +219,6 @@ public class EnrollmentController {
                 e.printStackTrace();
                 // IMPORTANT: Do NOT re-throw - enrollment should still succeed
             }
-            */
-            
-            logger.info("GOOGLE SHEETS INTEGRATION TEMPORARILY DISABLED FOR DEBUGGING");
-            System.out.println("GOOGLE SHEETS INTEGRATION TEMPORARILY DISABLED FOR DEBUGGING");
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

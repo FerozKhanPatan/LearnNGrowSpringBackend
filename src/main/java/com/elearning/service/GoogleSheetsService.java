@@ -117,102 +117,15 @@ public class GoogleSheetsService {
 
     /**
      * Add enrollment to Google Sheet
+     * STAGE 1: Only logging - no Sheets service, no credentials, no append
      */
     public void addEnrollmentToSheet(Enrollment enrollment, String name, String email) {
-        System.out.println("=== METHOD addEnrollmentToSheet ENTERED ===");
+        System.out.println("=== STAGE 1: METHOD addEnrollmentToSheet ENTERED ===");
         System.out.println("Enrollment object: " + enrollment);
         System.out.println("Name: " + name);
         System.out.println("Email: " + email);
-        
-        try {
-            System.out.println("=== STARTING GOOGLE SHEETS APPEND ===");
-            System.out.println("Spreadsheet ID: " + SPREADSHEET_ID);
-            System.out.println("Sheet Name: " + SHEET_NAME);
-            System.out.println("Enrollment ID: " + enrollment.getId());
-            System.out.println("User ID: " + (enrollment.getUser() != null ? enrollment.getUser().getId() : "GUEST"));
-            System.out.println("Name: " + name);
-            System.out.println("Email: " + email);
-
-            System.out.println("STEP 1: Getting Sheets service...");
-            Sheets sheetsService = getSheetsService();
-            System.out.println("STEP 1 COMPLETED: Sheets service initialized successfully");
-
-            System.out.println("STEP 2: Preparing data to be added...");
-            // Prepare data to be added
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            String enrollmentDate = enrollment.getEnrollmentDate().format(formatter);
-
-            List<Object> rowData = Arrays.asList(
-                enrollment.getUser() != null ? enrollment.getUser().getId().toString() : "GUEST",
-                name,
-                email,
-                enrollment.getPhoneNumber() != null ? enrollment.getPhoneNumber() : "",
-                enrollment.getCourseId() != null ? enrollment.getCourseId() : "",
-                enrollment.getCourseTitle() != null ? enrollment.getCourseTitle() : "",
-                enrollment.getStatus().toString(),
-                enrollmentDate,
-                enrollment.getMessage() != null ? enrollment.getMessage() : "",
-                enrollmentDate
-            );
-
-            System.out.println("STEP 2 COMPLETED: Row data size: " + rowData.size());
-            System.out.println("Row data: " + rowData);
-
-            System.out.println("STEP 3: Creating value range...");
-            // Create value range
-            ValueRange body = new ValueRange()
-                    .setValues(Collections.singletonList(rowData));
-
-            System.out.println("STEP 3 COMPLETED: Value range created");
-            System.out.println("Appending to sheet...");
-            System.out.println("API call: spreadsheets().values().append(" + SPREADSHEET_ID + ", " + SHEET_NAME + ", body)");
-            System.out.println("Value input option: RAW");
-
-            System.out.println("STEP 4: Executing Google Sheets API append request...");
-            // Append to sheet
-            var response = sheetsService.spreadsheets().values()
-                    .append(SPREADSHEET_ID, SHEET_NAME, body)
-                    .setValueInputOption("RAW")
-                    .execute();
-            
-            System.out.println("STEP 4 COMPLETED: API execute() returned");
-            System.out.println("=== GOOGLE SHEETS API RESPONSE ===");
-            System.out.println("Response object: " + response);
-            System.out.println("Response class: " + response.getClass().getName());
-            System.out.println("Updates: " + response.getUpdates());
-            if (response.getUpdates() != null) {
-                System.out.println("Updated rows: " + response.getUpdates().getUpdatedRows());
-                System.out.println("Updated columns: " + response.getUpdates().getUpdatedColumns());
-                System.out.println("Updated cells: " + response.getUpdates().getUpdatedCells());
-                System.out.println("Updated data: " + response.getUpdates().getUpdatedData());
-            } else {
-                System.out.println("WARNING: Updates object is null");
-            }
-
-            System.out.println("=== GOOGLE SHEETS APPEND SUCCESS ===");
-            System.out.println("Enrollment added to Google Sheet successfully");
-            System.out.println("Additional message saved: " + (enrollment.getMessage() != null ? enrollment.getMessage() : "N/A"));
-            System.out.println("Submission timestamp: " + enrollmentDate);
-
-        } catch (IOException | GeneralSecurityException e) {
-            System.err.println("=== GOOGLE SHEETS APPEND FAILED ===");
-            System.err.println("Error type: " + e.getClass().getName());
-            System.err.println("Error message: " + e.getMessage());
-            System.err.println("Cause: " + (e.getCause() != null ? e.getCause().getMessage() : "N/A"));
-            System.err.println("Cause type: " + (e.getCause() != null ? e.getCause().getClass().getName() : "N/A"));
-            
-            if (e.getCause() != null) {
-                System.err.println("Cause stack trace:");
-                e.getCause().printStackTrace();
-            }
-            
-            System.err.println("Full stack trace:");
-            e.printStackTrace();
-            
-            throw new RuntimeException("Failed to add enrollment to Google Sheet", e);
-        }
-        
-        System.out.println("=== METHOD addEnrollmentToSheet EXITING ===");
+        System.out.println("=== STAGE 1: METHOD addEnrollmentToSheet EXITING (NO OP) ===");
+        // STAGE 1: Do nothing - just log entry
     }
 
     /**
