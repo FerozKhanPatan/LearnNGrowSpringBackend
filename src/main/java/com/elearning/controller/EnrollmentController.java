@@ -8,6 +8,7 @@ import com.elearning.model.User;
 import com.elearning.repository.CourseRepository;
 import com.elearning.repository.EnrollmentRepository;
 import com.elearning.repository.UserRepository;
+import com.elearning.service.GoogleSheetsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,8 @@ public class EnrollmentController {
     @Autowired
     private CourseRepository courseRepository;
 
-    // GoogleSheetsService temporarily removed for debugging bean initialization issue
+    @Autowired
+    private GoogleSheetsService googleSheetsService;
 
     // Create enrollment (for both logged-in and guest users)
     @PostMapping
@@ -184,10 +186,35 @@ public class EnrollmentController {
             logger.info("Enrollment saved successfully with ID: {}", savedEnrollment.getId());
             System.out.println("Enrollment saved successfully with ID: " + savedEnrollment.getId());
 
-            // Google Sheets integration COMPLETELY REMOVED for debugging
-            // Issue appears to be during bean initialization/dependency injection
-            logger.info("Google Sheets integration removed - enrollment save only");
-            System.out.println("Google Sheets integration removed - enrollment save only");
+            // Submit to Google Sheets with lazy initialization - safe try/catch wrapper
+            try {
+                logger.info("=== LAZY INITIALIZATION: Starting Google Sheets submission ===");
+                System.out.println("=== LAZY INITIALIZATION: Starting Google Sheets submission ===");
+                logger.info("Enrollment ID: {}", savedEnrollment.getId());
+                System.out.println("Enrollment ID: " + savedEnrollment.getId());
+                logger.info("Name: {}", request.getName());
+                System.out.println("Name: " + request.getName());
+                logger.info("Email: {}", request.getEmail());
+                System.out.println("Email: " + request.getEmail());
+                
+                googleSheetsService.addEnrollmentToSheet(savedEnrollment, request.getName(), request.getEmail());
+                
+                logger.info("=== LAZY INITIALIZATION: Google Sheets submission completed ===");
+                System.out.println("=== LAZY INITIALIZATION: Google Sheets submission completed ===");
+            } catch (Exception e) {
+                // Google Sheets failure MUST NOT fail the entire enrollment
+                logger.error("=== LAZY INITIALIZATION: Google Sheets submission FAILED (ENROLLMENT STILL SUCCESSFUL) ===");
+                logger.error("Failed to add to Google Sheets: {}", e.getMessage(), e);
+                System.err.println("=== LAZY INITIALIZATION: Google Sheets submission FAILED (ENROLLMENT STILL SUCCESSFUL) ===");
+                System.err.println("Failed to add to Google Sheets: " + e.getMessage());
+                System.err.println("Exception type: " + e.getClass().getName());
+                System.err.println("Exception message: " + e.getMessage());
+                System.err.println("Cause: " + (e.getCause() != null ? e.getCause().getMessage() : "N/A"));
+                System.err.println("Cause type: " + (e.getCause() != null ? e.getCause().getClass().getName() : "N/A"));
+                System.err.println("Full stack trace:");
+                e.printStackTrace();
+                // IMPORTANT: Do NOT re-throw - enrollment should still succeed
+            }
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

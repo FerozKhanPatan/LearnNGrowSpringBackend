@@ -28,205 +28,149 @@ public class GoogleSheetsService {
     private static final String SPREADSHEET_ID = "1YEvEFOAXatAC0pmdlljrrjp0jYpWaId4QkHCt6ZuVck";
     private static final String SHEET_NAME = "Sheet1";
 
+    // LAZY INITIALIZATION: No constructor, no static init, no @PostConstruct
+    // All Google setup happens ONLY inside addEnrollmentToSheet()
+
     /**
-     * Get Sheets service using service account credentials
+     * Add enrollment to Google Sheet
+     * LAZY INITIALIZATION: All Google Sheets setup happens here at runtime
      */
-    private Sheets getSheetsService() throws IOException, GeneralSecurityException {
-        System.out.println("=== INITIALIZING GOOGLE SHEETS SERVICE ===");
-        System.out.println("Current working directory: " + System.getProperty("user.dir"));
-        
-        // Try multiple credential paths
-        InputStream credentialsStream = null;
-        String credentialsPath = "";
+    public void addEnrollmentToSheet(Enrollment enrollment, String name, String email) {
+        System.out.println("=== LAZY INITIALIZATION: Starting Google Sheets append ===");
         
         try {
-            // Try classpath resource first (for production JAR)
-            System.out.println("Attempting to load credentials from classpath...");
-            ClassPathResource resource = new ClassPathResource("credentials.json");
-            System.out.println("ClassPathResource exists: " + resource.exists());
+            // Load credentials here (LAZY)
+            System.out.println("STEP 1: Loading credentials...");
+            InputStream credentialsStream = null;
+            String credentialsPath = "";
             
-            if (resource.exists()) {
-                credentialsStream = resource.getInputStream();
-                credentialsPath = "classpath:credentials.json";
-                System.out.println("Credentials loaded from classpath: " + credentialsPath);
-            } else {
-                System.out.println("Credentials not found in classpath, trying file system...");
-                // Try file system (for local development)
-                File file = new File("src/main/resources/credentials.json");
-                System.out.println("Checking file: " + file.getAbsolutePath());
-                System.out.println("File exists: " + file.exists());
-                if (file.exists()) {
-                    credentialsStream = new FileInputStream(file);
-                    credentialsPath = file.getAbsolutePath();
-                    System.out.println("Credentials loaded from file: " + credentialsPath);
+            try {
+                // Try classpath resource first (for production JAR)
+                System.out.println("Attempting to load credentials from classpath...");
+                ClassPathResource resource = new ClassPathResource("credentials.json");
+                System.out.println("ClassPathResource exists: " + resource.exists());
+                
+                if (resource.exists()) {
+                    credentialsStream = resource.getInputStream();
+                    credentialsPath = "classpath:credentials.json";
+                    System.out.println("Credentials loaded from classpath: " + credentialsPath);
                 } else {
-                    // Try absolute path
-                    file = new File("credentials.json");
+                    System.out.println("Credentials not found in classpath, trying file system...");
+                    // Try file system (for local development)
+                    File file = new File("src/main/resources/credentials.json");
                     System.out.println("Checking file: " + file.getAbsolutePath());
                     System.out.println("File exists: " + file.exists());
                     if (file.exists()) {
                         credentialsStream = new FileInputStream(file);
                         credentialsPath = file.getAbsolutePath();
-                        System.out.println("Credentials loaded from current directory: " + credentialsPath);
+                        System.out.println("Credentials loaded from file: " + credentialsPath);
                     } else {
-                        System.err.println("ERROR: Credentials file not found in any location");
-                        System.err.println("Checked locations:");
-                        System.err.println("  - classpath:credentials.json");
-                        System.err.println("  - src/main/resources/credentials.json");
-                        System.err.println("  - credentials.json");
-                        throw new IOException("Credentials file not found in any location");
+                        // Try absolute path
+                        file = new File("credentials.json");
+                        System.out.println("Checking file: " + file.getAbsolutePath());
+                        System.out.println("File exists: " + file.exists());
+                        if (file.exists()) {
+                            credentialsStream = new FileInputStream(file);
+                            credentialsPath = file.getAbsolutePath();
+                            System.out.println("Credentials loaded from current directory: " + credentialsPath);
+                        } else {
+                            System.err.println("ERROR: Credentials file not found in any location");
+                            System.err.println("Checked locations:");
+                            System.err.println("  - classpath:credentials.json");
+                            System.err.println("  - src/main/resources/credentials.json");
+                            System.err.println("  - credentials.json");
+                            throw new IOException("Credentials file not found in any location");
+                        }
+                    }
+                }
+                
+                System.out.println("Credentials stream loaded successfully from: " + credentialsPath);
+                System.out.println("Stream available: " + (credentialsStream != null && credentialsStream.available() > 0));
+                
+                GoogleCredential credential = GoogleCredential.fromStream(credentialsStream)
+                        .createScoped(SCOPES);
+                
+                System.out.println("Credential created with scopes: " + SCOPES);
+                System.out.println("Service account email: " + credential.getServiceAccountId());
+                System.out.println("STEP 1 COMPLETED: Credentials loaded successfully");
+                
+                // Create Sheets service here (LAZY)
+                System.out.println("STEP 2: Creating Sheets service...");
+                Sheets sheetsService = new Sheets.Builder(
+                        GoogleNetHttpTransport.newTrustedTransport(),
+                        GsonFactory.getDefaultInstance(),
+                        credential)
+                        .setApplicationName(APPLICATION_NAME)
+                        .build();
+                
+                System.out.println("STEP 2 COMPLETED: Sheets service initialized successfully");
+                
+                // Prepare data
+                System.out.println("STEP 3: Preparing enrollment data...");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String enrollmentDate = enrollment.getEnrollmentDate().format(formatter);
+
+                List<Object> rowData = Arrays.asList(
+                    enrollment.getUser() != null ? enrollment.getUser().getId().toString() : "GUEST",
+                    name,
+                    email,
+                    enrollment.getPhoneNumber() != null ? enrollment.getPhoneNumber() : "",
+                    enrollment.getCourseId() != null ? enrollment.getCourseId() : "",
+                    enrollment.getCourseTitle() != null ? enrollment.getCourseTitle() : "",
+                    enrollment.getStatus().toString(),
+                    enrollmentDate,
+                    enrollment.getMessage() != null ? enrollment.getMessage() : "",
+                    enrollmentDate
+                );
+
+                System.out.println("STEP 3 COMPLETED: Row data prepared");
+
+                // Create value range
+                System.out.println("STEP 4: Creating value range...");
+                ValueRange body = new ValueRange()
+                        .setValues(Collections.singletonList(rowData));
+
+                System.out.println("STEP 4 COMPLETED: Value range created");
+
+                // Execute append here (LAZY)
+                System.out.println("STEP 5: Executing Google Sheets API append...");
+                var response = sheetsService.spreadsheets().values()
+                        .append(SPREADSHEET_ID, SHEET_NAME, body)
+                        .setValueInputOption("RAW")
+                        .execute();
+                
+                System.out.println("STEP 5 COMPLETED: API execute() returned");
+                System.out.println("API Response: " + response);
+                System.out.println("Updates: " + response.getUpdates());
+                if (response.getUpdates() != null) {
+                    System.out.println("Updated rows: " + response.getUpdates().getUpdatedRows());
+                    System.out.println("Updated columns: " + response.getUpdates().getUpdatedColumns());
+                    System.out.println("Updated cells: " + response.getUpdates().getUpdatedCells());
+                }
+
+                System.out.println("=== LAZY INITIALIZATION: Google Sheets append SUCCESS ===");
+                
+            } finally {
+                if (credentialsStream != null) {
+                    try {
+                        credentialsStream.close();
+                    } catch (IOException e) {
+                        System.err.println("Error closing credentials stream: " + e.getMessage());
                     }
                 }
             }
             
-            System.out.println("Credentials stream loaded successfully from: " + credentialsPath);
-            System.out.println("Stream available: " + (credentialsStream != null && credentialsStream.available() > 0));
-            
-            GoogleCredential credential = GoogleCredential.fromStream(credentialsStream)
-                    .createScoped(SCOPES);
-            
-            System.out.println("Credential created with scopes: " + SCOPES);
-            System.out.println("Service account email: " + credential.getServiceAccountId());
-            System.out.println("Service account ID: " + credential.getServiceAccountId());
-
-            Sheets sheetsService = new Sheets.Builder(
-                    GoogleNetHttpTransport.newTrustedTransport(),
-                    GsonFactory.getDefaultInstance(),
-                    credential)
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
-            
-            System.out.println("Sheets service initialized successfully");
-            return sheetsService;
-            
-        } catch (IOException e) {
-            System.err.println("ERROR loading credentials: " + e.getMessage());
-            System.err.println("Error type: " + e.getClass().getName());
-            e.printStackTrace();
-            throw e;
-        } finally {
-            if (credentialsStream != null) {
-                try {
-                    credentialsStream.close();
-                } catch (IOException e) {
-                    System.err.println("Error closing credentials stream: " + e.getMessage());
-                }
-            }
-        }
-    }
-
-    /**
-     * Add enrollment to Google Sheet
-     * STAGE 1: Only logging - no Sheets service, no credentials, no append
-     */
-    public void addEnrollmentToSheet(Enrollment enrollment, String name, String email) {
-        System.out.println("=== STAGE 1: METHOD addEnrollmentToSheet ENTERED ===");
-        System.out.println("Enrollment object: " + enrollment);
-        System.out.println("Name: " + name);
-        System.out.println("Email: " + email);
-        System.out.println("=== STAGE 1: METHOD addEnrollmentToSheet EXITING (NO OP) ===");
-        // STAGE 1: Do nothing - just log entry
-    }
-
-    /**
-     * Test connection to Google Sheets
-     */
-    public boolean testConnection() {
-        try {
-            System.out.println("=== TESTING GOOGLE SHEETS CONNECTION ===");
-            Sheets sheetsService = getSheetsService();
-            
-            // Try to read the spreadsheet metadata
-            var spreadsheet = sheetsService.spreadsheets().get(SPREADSHEET_ID).execute();
-            System.out.println("Spreadsheet title: " + spreadsheet.getProperties().getTitle());
-            System.out.println("Spreadsheet URL: " + spreadsheet.getSpreadsheetUrl());
-            
-            // List all sheets
-            System.out.println("Available sheets:");
-            for (var sheet : spreadsheet.getSheets()) {
-                System.out.println("  - " + sheet.getProperties().getTitle());
-            }
-            
-            // Check if target sheet exists
-            boolean sheetExists = spreadsheet.getSheets().stream()
-                .anyMatch(sheet -> sheet.getProperties().getTitle().equals(SHEET_NAME));
-            
-            if (sheetExists) {
-                System.out.println("Target sheet '" + SHEET_NAME + "' exists");
-            } else {
-                System.err.println("WARNING: Target sheet '" + SHEET_NAME + "' does not exist!");
-                System.err.println("Available sheets: " + 
-                    spreadsheet.getSheets().stream()
-                        .map(sheet -> sheet.getProperties().getTitle())
-                        .toList());
-            }
-            
-            System.out.println("=== GOOGLE SHEETS CONNECTION TEST SUCCESS ===");
-            return sheetExists;
-            
-        } catch (IOException | GeneralSecurityException e) {
-            System.err.println("=== GOOGLE SHEETS CONNECTION TEST FAILED ===");
+        } catch (Exception e) {
+            System.err.println("=== LAZY INITIALIZATION: Google Sheets append FAILED ===");
             System.err.println("Error type: " + e.getClass().getName());
             System.err.println("Error message: " + e.getMessage());
+            System.err.println("Cause: " + (e.getCause() != null ? e.getCause().getMessage() : "N/A"));
+            System.err.println("Full stack trace:");
             e.printStackTrace();
-            return false;
+            // Do NOT re-throw - enrollment should still succeed
         }
     }
 
-    /**
-     * Get all enrollments from Google Sheet (for syncing status)
-     */
-    public List<List<Object>> getEnrollmentsFromSheet() {
-        try {
-            System.out.println("=== READING FROM GOOGLE SHEET ===");
-            Sheets sheetsService = getSheetsService();
-
-            ValueRange response = sheetsService.spreadsheets().values()
-                    .get(SPREADSHEET_ID, SHEET_NAME)
-                    .execute();
-            
-            System.out.println("API Response: " + response);
-
-            List<List<Object>> values = response.getValues();
-            if (values == null || values.isEmpty()) {
-                System.out.println("No data found in Google Sheet");
-                return new ArrayList<>();
-            }
-            
-            System.out.println("Found " + values.size() + " rows in Google Sheet");
-            return values;
-
-        } catch (IOException | GeneralSecurityException e) {
-            System.err.println("Error reading from Google Sheet: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to read from Google Sheet", e);
-        }
-    }
-
-    /**
-     * Update enrollment status in Google Sheet
-     */
-    public void updateEnrollmentStatusInSheet(int rowIndex, String newStatus) {
-        try {
-            Sheets sheetsService = getSheetsService();
-
-            // Status is typically in column H (index 7, 0-based)
-            String range = SHEET_NAME + "!H" + (rowIndex + 1);
-
-            List<Object> rowData = Collections.singletonList(newStatus);
-            ValueRange body = new ValueRange()
-                    .setValues(Collections.singletonList(rowData));
-
-            sheetsService.spreadsheets().values()
-                    .update(SPREADSHEET_ID, range, body)
-                    .setValueInputOption("RAW")
-                    .execute();
-
-            System.out.println("Enrollment status updated in Google Sheet successfully");
-
-        } catch (IOException | GeneralSecurityException e) {
-            System.err.println("Error updating enrollment status in Google Sheet: " + e.getMessage());
-            throw new RuntimeException("Failed to update enrollment status in Google Sheet", e);
-        }
-    }
+    // Other methods temporarily removed to avoid getSheetsService() dependency
+    // These can be re-added later with lazy initialization if needed
 }
