@@ -92,7 +92,6 @@ public class GoogleSheetsService {
                 
                 System.out.println("Credential created with scopes: " + SCOPES);
                 System.out.println("Service account email: " + credential.getServiceAccountId());
-                System.out.println("Service account client email: " + credential.getClientEmail());
                 System.out.println("Service account ID: " + credential.getServiceAccountId());
                 System.out.println("STEP 1 COMPLETED: Credentials loaded successfully");
                 
