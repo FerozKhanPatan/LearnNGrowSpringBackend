@@ -296,7 +296,8 @@ public class EnrollmentController {
         }
     }
 
-    // Test Google Sheets connection
+    // Test Google Sheets connection - TEMPORARILY REMOVED for debugging
+    /*
     @GetMapping("/test-sheets")
     public ResponseEntity<?> testGoogleSheetsConnection() {
         logger.info("=== TESTING GOOGLE SHEETS CONNECTION ===");
@@ -319,4 +320,5 @@ public class EnrollmentController {
                 .body(Map.of("success", false, "message", "Google Sheets connection test error: " + e.getMessage()));
         }
     }
+    */
 }
