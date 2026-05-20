@@ -263,4 +263,28 @@ public class EnrollmentController {
                 .body(Map.of("success", false, "message", "Failed to update enrollment status: " + e.getMessage()));
         }
     }
+
+    // Test Google Sheets connection
+    @GetMapping("/test-sheets")
+    public ResponseEntity<?> testGoogleSheetsConnection() {
+        logger.info("=== TESTING GOOGLE SHEETS CONNECTION ===");
+        try {
+            boolean success = googleSheetsService.testConnection();
+            if (success) {
+                logger.info("Google Sheets connection test successful");
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Google Sheets connection successful"
+                ));
+            } else {
+                logger.warn("Google Sheets connection test failed");
+                return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "Google Sheets connection failed - check logs for details"));
+            }
+        } catch (Exception e) {
+            logger.error("Google Sheets connection test error: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest()
+                .body(Map.of("success", false, "message", "Google Sheets connection test error: " + e.getMessage()));
+        }
+    }
 }
