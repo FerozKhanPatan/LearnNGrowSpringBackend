@@ -89,7 +89,6 @@ public class GoogleSheetsService {
             System.out.println("Credential created with scopes: " + SCOPES);
             System.out.println("Service account email: " + credential.getServiceAccountId());
             System.out.println("Service account ID: " + credential.getServiceAccountId());
-            System.out.println("Token server URL: " + credential.getTokenServerUrl());
 
             Sheets sheetsService = new Sheets.Builder(
                     GoogleNetHttpTransport.newTrustedTransport(),
