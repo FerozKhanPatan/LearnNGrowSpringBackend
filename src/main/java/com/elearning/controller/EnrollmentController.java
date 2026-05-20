@@ -186,7 +186,7 @@ public class EnrollmentController {
             logger.info("Enrollment saved successfully with ID: {}", savedEnrollment.getId());
             System.out.println("Enrollment saved successfully with ID: " + savedEnrollment.getId());
 
-            // Submit to Google Sheets (non-blocking)
+            // Submit to Google Sheets (non-blocking) - MUST NOT fail enrollment
             try {
                 logger.info("=== ENTERED GOOGLE SHEETS SUBMISSION ===");
                 System.out.println("=== ENTERED GOOGLE SHEETS SUBMISSION ===");
@@ -206,15 +206,18 @@ public class EnrollmentController {
                 logger.info("Google Sheets submission successful");
                 System.out.println("Google Sheets submission successful");
             } catch (Exception e) {
-                logger.error("=== GOOGLE SHEETS SUBMISSION FAILED ===");
+                // Google Sheets failure MUST NOT fail the entire enrollment
+                logger.error("=== GOOGLE SHEETS SUBMISSION FAILED (ENROLLMENT STILL SUCCESSFUL) ===");
                 logger.error("Failed to add to Google Sheets: {}", e.getMessage(), e);
-                System.err.println("=== GOOGLE SHEETS SUBMISSION FAILED ===");
+                System.err.println("=== GOOGLE SHEETS SUBMISSION FAILED (ENROLLMENT STILL SUCCESSFUL) ===");
                 System.err.println("Failed to add to Google Sheets: " + e.getMessage());
                 System.err.println("Exception type: " + e.getClass().getName());
                 System.err.println("Exception message: " + e.getMessage());
                 System.err.println("Cause: " + (e.getCause() != null ? e.getCause().getMessage() : "N/A"));
+                System.err.println("Cause type: " + (e.getCause() != null ? e.getCause().getClass().getName() : "N/A"));
+                System.err.println("Full stack trace:");
                 e.printStackTrace();
-                // Don't fail the enrollment if Google Sheets fails
+                // IMPORTANT: Do NOT re-throw - enrollment should still succeed
             }
 
             Map<String, Object> response = new HashMap<>();

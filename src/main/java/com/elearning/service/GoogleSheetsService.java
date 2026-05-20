@@ -44,7 +44,6 @@ public class GoogleSheetsService {
             System.out.println("Attempting to load credentials from classpath...");
             ClassPathResource resource = new ClassPathResource("credentials.json");
             System.out.println("ClassPathResource exists: " + resource.exists());
-            System.out.println("ClassPathResource URL: " + resource.getURL());
             
             if (resource.exists()) {
                 credentialsStream = resource.getInputStream();
