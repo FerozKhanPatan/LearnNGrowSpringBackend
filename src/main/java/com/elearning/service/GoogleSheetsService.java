@@ -92,6 +92,8 @@ public class GoogleSheetsService {
                 
                 System.out.println("Credential created with scopes: " + SCOPES);
                 System.out.println("Service account email: " + credential.getServiceAccountId());
+                System.out.println("Service account client email: " + credential.getClientEmail());
+                System.out.println("Service account ID: " + credential.getServiceAccountId());
                 System.out.println("STEP 1 COMPLETED: Credentials loaded successfully");
                 
                 // Create Sheets service here (LAZY)
@@ -134,6 +136,10 @@ public class GoogleSheetsService {
 
                 // Execute append here (LAZY)
                 System.out.println("STEP 5: Executing Google Sheets API append...");
+                System.out.println("Spreadsheet ID: " + SPREADSHEET_ID);
+                System.out.println("Sheet Name: " + SHEET_NAME);
+                System.out.println("Append range: " + SHEET_NAME);
+                System.out.println("Value input option: RAW");
                 var response = sheetsService.spreadsheets().values()
                         .append(SPREADSHEET_ID, SHEET_NAME, body)
                         .setValueInputOption("RAW")
