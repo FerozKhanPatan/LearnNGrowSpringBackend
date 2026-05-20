@@ -43,6 +43,8 @@ public class EnrollmentController {
     // Create enrollment (for both logged-in and guest users)
     @PostMapping
     public ResponseEntity<?> createEnrollment(@RequestBody EnrollmentRequestDTO request) {
+        System.out.println("=== ENROLLMENT REQUEST START ===");
+        System.out.println("REQUEST BODY = " + request);
         logger.info("=== ENROLLMENT REQUEST START ===");
         logger.info("Received enrollment request: {}", request);
         logger.info("Request details - courseId={}, userId={}, email={}, name={}, phoneNumber={}",
@@ -52,50 +54,61 @@ public class EnrollmentController {
             // Validate required fields
             if (request.getCourseId() == null || request.getCourseId().isEmpty()) {
                 logger.warn("Enrollment request missing courseId");
+                System.out.println("ERROR: Course ID is missing or empty");
                 return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", "Course ID is required"));
             }
 
             if (request.getEmail() == null || request.getEmail().isEmpty()) {
                 logger.warn("Enrollment request missing email");
+                System.out.println("ERROR: Email is missing or empty");
                 return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", "Email is required"));
             }
 
             // Fetch course from database using courseCode
             logger.info("Looking up course with code: {}", request.getCourseId());
+            System.out.println("Looking up course with code: " + request.getCourseId());
             Optional<Course> courseOptional = courseRepository.findByCourseCode(request.getCourseId());
             if (courseOptional.isEmpty()) {
                 logger.warn("Course not found with code: {}", request.getCourseId());
+                System.out.println("ERROR: Course not found with code: " + request.getCourseId());
                 return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", "Course not found with code: " + request.getCourseId()));
             }
             Course course = courseOptional.get();
             logger.info("Found course: id={}, code={}, name={}", course.getId(), course.getCourseCode(), course.getName());
+            System.out.println("Found course: id=" + course.getId() + ", code=" + course.getCourseCode() + ", name=" + course.getName());
 
             // Check if user is logged in
             User user = null;
             if (request.getUserId() != null) {
                 logger.info("Looking up user by ID: {}", request.getUserId());
+                System.out.println("Looking up user by ID: " + request.getUserId());
                 Optional<User> userOptional = userRepository.findById(request.getUserId());
                 if (userOptional.isPresent()) {
                     user = userOptional.get();
                     logger.info("Found logged-in user: id={}, email={}", user.getId(), user.getEmail());
+                    System.out.println("Found logged-in user: id=" + user.getId() + ", email=" + user.getEmail());
                 } else {
                     logger.warn("User ID {} not found in database", request.getUserId());
+                    System.out.println("WARNING: User ID " + request.getUserId() + " not found in database");
                 }
             }
 
             // For guest users, check if email already exists (to prevent duplicate guest enrollments)
             if (user == null) {
                 logger.info("Looking up user by email: {}", request.getEmail());
+                System.out.println("Looking up user by email: " + request.getEmail());
                 Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
                 if (existingUser.isPresent()) {
                     user = existingUser.get();
                     logger.info("Found existing user by email: id={}, email={}", user.getId(), user.getEmail());
+                    System.out.println("Found existing user by email: id=" + user.getId() + ", email=" + user.getEmail());
                 } else {
                     // Create new user automatically if email doesn't exist
                     logger.info("No existing user found with email: {}. Creating new user.", request.getEmail());
+                    System.out.println("Creating new user with email: " + request.getEmail());
                     User newUser = new User();
                     newUser.setName(request.getName());
                     newUser.setEmail(request.getEmail());
@@ -103,13 +116,16 @@ public class EnrollmentController {
                     newUser.setRole(User.UserRole.STUDENT);
                     user = userRepository.save(newUser);
                     logger.info("Created new user: id={}, email={}, role={}", user.getId(), user.getEmail(), user.getRole());
+                    System.out.println("Created new user: id=" + user.getId() + ", email=" + user.getEmail());
                 }
             }
 
             logger.info("Resolved user: id={}, email={}", user.getId(), user.getEmail());
+            System.out.println("Resolved user: id=" + user.getId() + ", email=" + user.getEmail());
 
             if (user == null) {
                 logger.error("User resolved as NULL before enrollment save");
+                System.out.println("ERROR: User resolved as NULL before enrollment save");
                 return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", "Failed to resolve user for enrollment"));
             }
@@ -117,12 +133,16 @@ public class EnrollmentController {
             // Check for duplicate enrollment
             if (user != null) {
                 logger.info("Checking for duplicate enrollment for user id={}", user.getId());
+                System.out.println("Checking for duplicate enrollment for user id=" + user.getId());
                 List<Enrollment> existingEnrollments = enrollmentRepository.findByUserId(user.getId());
                 logger.info("Found {} existing enrollments for user", existingEnrollments.size());
+                System.out.println("Found " + existingEnrollments.size() + " existing enrollments for user");
                 for (Enrollment existing : existingEnrollments) {
                     logger.info("Checking existing enrollment: courseId={}, status={}", existing.getCourseId(), existing.getStatus());
+                    System.out.println("Checking existing enrollment: courseId=" + existing.getCourseId() + ", status=" + existing.getStatus());
                     if (existing.getCourseId() != null && existing.getCourseId().equals(request.getCourseId())) {
                         logger.warn("Duplicate enrollment detected for user {} and course {}", user.getId(), request.getCourseId());
+                        System.out.println("ERROR: Duplicate enrollment detected for user " + user.getId() + " and course " + request.getCourseId());
                         return ResponseEntity.badRequest()
                             .body(Map.of("success", false, "message", "You are already enrolled in this course"));
                     }
@@ -131,6 +151,7 @@ public class EnrollmentController {
 
             // Create enrollment
             logger.info("Creating enrollment entity...");
+            System.out.println("Creating enrollment entity...");
             Enrollment enrollment = new Enrollment();
             enrollment.setUser(user);
             enrollment.setCourse(course);
@@ -150,20 +171,32 @@ public class EnrollmentController {
                 enrollment.getStatus(),
                 enrollment.getPhoneNumber(),
                 enrollment.getMessage());
+            System.out.println("Enrollment entity before save: user=" + (enrollment.getUser() != null ? enrollment.getUser().getId() : null) +
+                ", course=" + (enrollment.getCourse() != null ? enrollment.getCourse().getId() : null) +
+                ", courseId=" + enrollment.getCourseId() +
+                ", courseTitle=" + enrollment.getCourseTitle() +
+                ", status=" + enrollment.getStatus());
 
             logger.info("Enrollment user ID before save: {}", enrollment.getUser().getId());
+            System.out.println("Enrollment user ID before save: " + enrollment.getUser().getId());
 
             logger.info("Saving enrollment to database...");
+            System.out.println("Saving enrollment to database...");
             Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
             logger.info("Enrollment saved successfully with ID: {}", savedEnrollment.getId());
+            System.out.println("Enrollment saved successfully with ID: " + savedEnrollment.getId());
 
             // Submit to Google Sheets (non-blocking)
             try {
                 logger.info("Submitting enrollment to Google Sheets...");
+                System.out.println("Submitting enrollment to Google Sheets...");
                 googleSheetsService.addEnrollmentToSheet(savedEnrollment, request.getName(), request.getEmail());
                 logger.info("Google Sheets submission successful");
+                System.out.println("Google Sheets submission successful");
             } catch (Exception e) {
                 logger.error("Failed to add to Google Sheets: {}", e.getMessage(), e);
+                System.err.println("Failed to add to Google Sheets: " + e.getMessage());
+                e.printStackTrace();
                 // Don't fail the enrollment if Google Sheets fails
             }
 
@@ -173,6 +206,7 @@ public class EnrollmentController {
             response.put("enrollment", EnrollmentResponseDTO.fromEntity(savedEnrollment));
 
             logger.info("=== ENROLLMENT REQUEST SUCCESSFUL ===");
+            System.out.println("=== ENROLLMENT REQUEST SUCCESSFUL ===");
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -180,8 +214,17 @@ public class EnrollmentController {
             logger.error("Exception type: {}", e.getClass().getName());
             logger.error("Exception message: {}", e.getMessage());
             logger.error("Full stack trace:", e);
+            System.err.println("=== ENROLLMENT REQUEST FAILED ===");
+            System.err.println("Exception type: " + e.getClass().getName());
+            System.err.println("Exception message: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest()
-                .body(Map.of("success", false, "message", "Failed to submit enrollment. Please try again."));
+                .body(Map.of(
+                    "success", false,
+                    "message", "Failed to submit enrollment. Please try again.",
+                    "error", e.getMessage(),
+                    "type", e.getClass().getName()
+                ));
         }
     }
 
