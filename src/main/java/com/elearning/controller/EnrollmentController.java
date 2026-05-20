@@ -186,7 +186,9 @@ public class EnrollmentController {
             logger.info("Enrollment saved successfully with ID: {}", savedEnrollment.getId());
             System.out.println("Enrollment saved successfully with ID: " + savedEnrollment.getId());
 
-            // Submit to Google Sheets (non-blocking) - MUST NOT fail enrollment
+            // Submit to Google Sheets (non-blocking) - TEMPORARILY DISABLED FOR DEBUGGING
+            // TODO: Re-enable after confirming API returns 200
+            /*
             try {
                 logger.info("=== ENTERED GOOGLE SHEETS SUBMISSION ===");
                 System.out.println("=== ENTERED GOOGLE SHEETS SUBMISSION ===");
@@ -219,6 +221,10 @@ public class EnrollmentController {
                 e.printStackTrace();
                 // IMPORTANT: Do NOT re-throw - enrollment should still succeed
             }
+            */
+            
+            logger.info("GOOGLE SHEETS INTEGRATION TEMPORARILY DISABLED FOR DEBUGGING");
+            System.out.println("GOOGLE SHEETS INTEGRATION TEMPORARILY DISABLED FOR DEBUGGING");
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
