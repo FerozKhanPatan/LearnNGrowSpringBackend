@@ -58,7 +58,7 @@ public class CertificateController {
                 return ResponseEntity.badRequest().body("User or Course not found!");
             }
 
-            Optional<Enrollment> enrollmentOpt = enrollmentRepository.findByUserIdAndCourseId(userId, courseId);
+            Optional<Enrollment> enrollmentOpt = enrollmentRepository.findByUserIdAndCourseId(userId, courseId.toString());
             if (enrollmentOpt.isEmpty()) {
                 return ResponseEntity.badRequest().body("User not enrolled in this course!");
             }

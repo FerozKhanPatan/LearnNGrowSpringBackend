@@ -66,7 +66,7 @@ public class CourseController {
                 return ResponseEntity.badRequest().body("User or Course not found!");
             }
 
-            Optional<Enrollment> existingEnrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId);
+            Optional<Enrollment> existingEnrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId.toString());
             if (existingEnrollment.isPresent()) {
                 return ResponseEntity.badRequest().body("User already enrolled in this course!");
             }

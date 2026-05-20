@@ -19,7 +19,10 @@ public class Course {
     
     @Column(nullable = false)
     private String name;
-    
+
+    @Column(unique = true, length = 20)
+    private String courseCode;
+
     @Column(columnDefinition = "TEXT")
     private String description;
     
@@ -61,7 +64,10 @@ public class Course {
     
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    
+
+    public String getCourseCode() { return courseCode; }
+    public void setCourseCode(String courseCode) { this.courseCode = courseCode; }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     
